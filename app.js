@@ -1,57 +1,63 @@
-// KOTHIQUE HQ - Firebase Configuration
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOTHIQUE HQ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAIun0R_-JrATLVn4-aYndUo0_yxAuICjk",
-  authDomain: "kothique-media2026.firebaseapp.com",
-  projectId: "kothique-media2026",
-  storageBucket: "kothique-media2026.firebasestorage.app",
-  messagingSenderId: "392457896273",
-  appId: "1:392457896273:web:ea584b3d997372abd21370"
-};
+<div id="app">
+  <h1>KOTHIQUE</h1>
+  <p>Every Voice Has a Story.</p>
 
-firebase.initializeApp(firebaseConfig);
+  <div id="login">
+    <h2>Welcome to KOTHIQUE HQ</h2>
+    <p>Company Management System</p>
+    <input type="email" id="email" placeholder="Email Address">
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <p id="message"></p>
+  </div>
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+  <div id="dashboard" hidden>
+    <h2>Chairman Dashboard</h2>
+    <p id="userEmail"></p>
+    <button id="logoutBtn">Logout</button>
 
-const chairmanUID = "eY7TGc8tu8PfearxTlXWc73HBPr1";
+    <hr>
 
-const loginBox = document.getElementById("login");
-const dashboard = document.getElementById("dashboard");
-const message = document.getElementById("message");
+    <h2>Team Management</h2>
+    <p>Add and manage KOTHIQUE team members.</p>
 
-// Login
-document.getElementById("loginBtn").addEventListener("click", async () => {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
+    <input id="memberName" placeholder="Full Name">
 
-  message.textContent = "Logging in...";
+    <select id="memberRole">
+      <option value="">Select Position</option>
+      <option>Co-Founder</option>
+      <option>CEO</option>
+      <option>Board Member</option>
+      <option>Director of Finance</option>
+      <option>Strategic Advisor</option>
+      <option>Team Member</option>
+    </select>
 
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-  } catch (error) {
-    message.textContent = error.message;
-  }
-});
+    <input id="memberEmail" type="email" placeholder="Email (Optional)">
 
-// Authentication Check
-auth.onAuthStateChanged((user) => {
-  if (user && user.uid === chairmanUID) {
-    loginBox.hidden = true;
-    dashboard.hidden = false;
-    document.getElementById("userEmail").textContent = user.email;
-  } else {
-    dashboard.hidden = true;
-    loginBox.hidden = false;
+    <button id="addMemberBtn">Add Team Member</button>
 
-    if (user) {
-      message.textContent = "Access denied. Chairman account only.";
-      auth.signOut();
-    }
-  }
-});
+    <p id="teamMessage"></p>
 
-// Logout
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  auth.signOut();
-});
+    <h3>Our Team</h3>
+    <div id="teamList">Loading team...</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
