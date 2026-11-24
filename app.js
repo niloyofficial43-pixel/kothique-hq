@@ -1,5 +1,4 @@
-// KOTHIQUE HQ
-// Firebase Configuration
+// KOTHIQUE HQ - Management System
 
 const firebaseConfig = {
   apiKey: "AIzaSyAIun0R_-JrATLVn4-aYndUo0_yxAuICjk",
@@ -21,28 +20,38 @@ const loginBox = document.getElementById("login");
 const dashboard = document.getElementById("dashboard");
 const message = document.getElementById("message");
 
-// LOGIN
-document.getElementById("loginBtn").addEventListener("click", async () => {
+const chairman = {
+  name: "Md Shahriar Emon Niloy",
+  role: "Founder, Chairman & Patron",
+  email: "niloyofficial43@gmail.com"
+};
+
+const roleOrder = {
+  "CEO": 1,
+  "Co-Founder": 2,
+  "Board Member": 3,
+  "Director of Finance": 4,
+  "Strategic Advisor": 5,
+  "Team Member": 6
+};
+
+function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
   message.textContent = "Logging in...";
 
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-  } catch (error) {
-    message.textContent = error.message;
-  }
-});
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(error => message.textContent = error.message);
+}
 
-// AUTHENTICATION
+document.getElementById("loginBtn").addEventListener("click", login);
+
 auth.onAuthStateChanged(user => {
   if (user && user.uid === chairmanUID) {
     loginBox.hidden = true;
     dashboard.hidden = false;
-
     document.getElementById("userEmail").textContent = user.email;
-
     loadTeam();
   } else {
     dashboard.hidden = true;
@@ -55,14 +64,12 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// LOGOUT
 document.getElementById("logoutBtn").addEventListener("click", () => {
   auth.signOut();
 });
 
-// ADD TEAM MEMBER
+// ADD MEMBER
 document.getElementById("addMemberBtn").addEventListener("click", async () => {
-
   const name = document.getElementById("memberName").value.trim();
   const role = document.getElementById("memberRole").value;
   const email = document.getElementById("memberEmail").value.trim();
@@ -76,9 +83,9 @@ document.getElementById("addMemberBtn").addEventListener("click", async () => {
 
   try {
     await db.collection("team").add({
-      name: name,
-      role: role,
-      email: email,
+      name,
+      role,
+      email,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
@@ -87,60 +94,92 @@ document.getElementById("addMemberBtn").addEventListener("click", async () => {
     document.getElementById("memberEmail").value = "";
 
     teamMessage.textContent = "Team member added successfully!";
-
     loadTeam();
 
   } catch (error) {
-    teamMessage.textContent = "Error: " + error.message;
+    teamMessage.textContent = error.message;
   }
 });
 
-// LOAD TEAM
+// LOAD AND SORT TEAM
 async function loadTeam() {
-
   const teamList = document.getElementById("teamList");
-
-  teamList.textContent = "Loading team...";
+  teamList.innerHTML = "Loading team...";
 
   try {
+    const snapshot = await db.collection("team").get();
 
-    const snapshot = await db.collection("team")
-      .orderBy("createdAt", "desc")
-      .get();
+    const members = [];
+
+    snapshot.forEach(doc => {
+      members.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    members.sort((a, b) => {
+      const rankA = roleOrder[a.role] ?? 99;
+      const rankB = roleOrder[b.role] ?? 99;
+
+      if (rankA !== rankB) return rankA - rankB;
+
+      return (a.createdAt?.seconds || 0) -
+             (b.createdAt?.seconds || 0);
+    });
 
     teamList.innerHTML = "";
 
-    if (snapshot.empty) {
-      teamList.textContent = "No team members added yet.";
-      return;
-    }
+    const heading = document.createElement("h3");
+    heading.textContent = "Leadership & Management";
+    teamList.appendChild(heading);
 
-    snapshot.forEach(doc => {
+    addMemberCard(teamList, 1, chairman.name,
+      chairman.role, chairman.email);
 
-      const member = doc.data();
+    members.forEach((member, index) => {
+      const designation = member.name === "A.K.M. Reazul Kuddus"
+        ? "Co-Founder & CEO"
+        : member.role;
 
-      const card = document.createElement("div");
-      card.style.padding = "15px";
-      card.style.margin = "10px 0";
-      card.style.background = "#26354c";
-      card.style.borderRadius = "10px";
-
-      const name = document.createElement("h3");
-      name.textContent = member.name;
-
-      const role = document.createElement("p");
-      role.textContent = "Position: " + member.role;
-
-      const email = document.createElement("p");
-      email.textContent = "Email: " + (member.email || "Not provided");
-
-      card.append(name, role, email);
-
-      teamList.appendChild(card);
-
+      addMemberCard(
+        teamList,
+        index + 2,
+        member.name,
+        designation,
+        member.email
+      );
     });
 
+    if (members.length === 0) {
+      const empty = document.createElement("p");
+      empty.textContent = "No additional members added yet.";
+      teamList.appendChild(empty);
+    }
+
   } catch (error) {
-    teamList.textContent = "Could not load team: " + error.message;
+    teamList.textContent = "Error: " + error.message;
   }
+}
+
+// MEMBER CARD
+function addMemberCard(container, serial, name, role, email) {
+  const card = document.createElement("div");
+
+  card.style.padding = "15px";
+  card.style.margin = "10px 0";
+  card.style.background = "#26354c";
+  card.style.borderRadius = "10px";
+
+  const title = document.createElement("h3");
+  title.textContent = serial + ". " + name;
+
+  const position = document.createElement("p");
+  position.textContent = "Designation: " + role;
+
+  const contact = document.createElement("p");
+  contact.textContent = "Email: " + (email || "Not provided");
+
+  card.append(title, position, contact);
+  container.appendChild(card);
 }
