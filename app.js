@@ -1,63 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KOTHIQUE HQ</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
+// KOTHIQUE HQ
+// Firebase Configuration
 
-<div id="app">
-  <h1>KOTHIQUE</h1>
-  <p>Every Voice Has a Story.</p>
+const firebaseConfig = {
+  apiKey: "AIzaSyAIun0R_-JrATLVn4-aYndUo0_yxAuICjk",
+  authDomain: "kothique-media2026.firebaseapp.com",
+  projectId: "kothique-media2026",
+  storageBucket: "kothique-media2026.firebasestorage.app",
+  messagingSenderId: "392457896273",
+  appId: "1:392457896273:web:ea584b3d997372abd21370"
+};
 
-  <div id="login">
-    <h2>Welcome to KOTHIQUE HQ</h2>
-    <p>Company Management System</p>
-    <input type="email" id="email" placeholder="Email Address">
-    <input type="password" id="password" placeholder="Password">
-    <button id="loginBtn">Login</button>
-    <p id="message"></p>
-  </div>
+firebase.initializeApp(firebaseConfig);
 
-  <div id="dashboard" hidden>
-    <h2>Chairman Dashboard</h2>
-    <p id="userEmail"></p>
-    <button id="logoutBtn">Logout</button>
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-    <hr>
+const chairmanUID = "eY7TGc8tu8PfearxTlXWc73HBPr1";
 
-    <h2>Team Management</h2>
-    <p>Add and manage KOTHIQUE team members.</p>
+const loginBox = document.getElementById("login");
+const dashboard = document.getElementById("dashboard");
+const message = document.getElementById("message");
 
-    <input id="memberName" placeholder="Full Name">
+// LOGIN
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
 
-    <select id="memberRole">
-      <option value="">Select Position</option>
-      <option>Co-Founder</option>
-      <option>CEO</option>
-      <option>Board Member</option>
-      <option>Director of Finance</option>
-      <option>Strategic Advisor</option>
-      <option>Team Member</option>
-    </select>
+  message.textContent = "Logging in...";
 
-    <input id="memberEmail" type="email" placeholder="Email (Optional)">
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch (error) {
+    message.textContent = error.message;
+  }
+});
 
-    <button id="addMemberBtn">Add Team Member</button>
+// AUTHENTICATION
+auth.onAuthStateChanged(user => {
+  if (user && user.uid === chairmanUID) {
+    loginBox.hidden = true;
+    dashboard.hidden = false;
 
-    <p id="teamMessage"></p>
+    document.getElementById("userEmail").textContent = user.email;
 
-    <h3>Our Team</h3>
-    <div id="teamList">Loading team...</div>
-  </div>
-</div>
+    loadTeam();
+  } else {
+    dashboard.hidden = true;
+    loginBox.hidden = false;
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="app.js"></script>
+    if (user) {
+      message.textContent = "Chairman access only.";
+      auth.signOut();
+    }
+  }
+});
 
-</body>
-</html>
+// LOGOUT
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  auth.signOut();
+});
+
+// ADD TEAM MEMBER
+document.getElementById("addMemberBtn").addEventListener("click", async () => {
+
+  const name = document.getElementById("memberName").value.trim();
+  const role = document.getElementById("memberRole").value;
+  const email = document.getElementById("memberEmail").value.trim();
+
+  const teamMessage = document.getElementById("teamMessage");
+
+  if (!name || !role) {
+    teamMessage.textContent = "Name and position are required.";
+    return;
+  }
+
+  try {
+    await db.collection("team").add({
+      name: name,
+      role: role,
+      email: email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    document.getElementById("memberName").value = "";
+    document.getElementById("memberRole").value = "";
+    document.getElementById("memberEmail").value = "";
+
+    teamMessage.textContent = "Team member added successfully!";
+
+    loadTeam();
+
+  } catch (error) {
+    teamMessage.textContent = "Error: " + error.message;
+  }
+});
+
+// LOAD TEAM
+async function loadTeam() {
+
+  const teamList = document.getElementById("teamList");
+
+  teamList.textContent = "Loading team...";
+
+  try {
+
+    const snapshot = await db.collection("team")
+      .orderBy("createdAt", "desc")
+      .get();
+
+    teamList.innerHTML = "";
+
+    if (snapshot.empty) {
+      teamList.textContent = "No team members added yet.";
+      return;
+    }
+
+    snapshot.forEach(doc => {
+
+      const member = doc.data();
+
+      const card = document.createElement("div");
+      card.style.padding = "15px";
+      card.style.margin = "10px 0";
+      card.style.background = "#26354c";
+      card.style.borderRadius = "10px";
+
+      const name = document.createElement("h3");
+      name.textContent = member.name;
+
+      const role = document.createElement("p");
+      role.textContent = "Position: " + member.role;
+
+      const email = document.createElement("p");
+      email.textContent = "Email: " + (member.email || "Not provided");
+
+      card.append(name, role, email);
+
+      teamList.appendChild(card);
+
+    });
+
+  } catch (error) {
+    teamList.textContent = "Could not load team: " + error.message;
+  }
+}
