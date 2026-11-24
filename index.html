@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOTHIQUE HQ</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101114;color:white;font-family:Arial,sans-serif}
+.container{max-width:480px;margin:60px auto;padding:25px}
+.card{background:#1c1d22;padding:28px;border-radius:16px;border:1px solid #333}
+h1{letter-spacing:3px;color:#f0273a}
+h2{font-size:22px}
+p{color:#aaa}
+input{width:100%;padding:14px;margin:9px 0;background:#292a30;border:1px solid #444;border-radius:8px;color:white}
+button{width:100%;padding:14px;margin-top:12px;background:#f0273a;border:0;border-radius:8px;color:white;font-weight:bold}
+button.secondary{background:#333}
+#dashboard{display:none}
+.small{font-size:12px;color:#888}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="card">
+<h1>KOTHIQUE</h1>
+<p>Every Voice Has a Story.</p>
+<div id="login">
+<h2>Management HQ Login</h2>
+<input id="email" type="email" placeholder="Email address">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<button class="secondary" onclick="signup()">Create Account</button>
+<p class="small">Authorised team members only.</p>
+<p id="message"></p>
+</div>
+<div id="dashboard">
+<h2>Welcome to KOTHIQUE HQ</h2>
+<p id="userEmail"></p>
+<hr>
+<h3>Management Dashboard</h3>
+<p>Company Operations</p>
+<p>Team Management</p>
+<p>Projects & Tasks</p>
+<p>Finance & Accounts</p>
+<p>Content Calendar</p>
+<p>Client Management</p>
+<p class="small">More management features will be added in the next stages.</p>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+</div>
+<script>
+const firebaseConfig = {
+apiKey: "AIzaSyAIun0R_-JrATLVn4-aYndUo0_yxAuICjk",
+authDomain: "kothique-media2026.firebaseapp.com",
+projectId: "kothique-media2026",
+storageBucket: "kothique-media2026.firebasestorage.app",
+messagingSenderId: "392457896273",
+appId: "1:392457896273:web:ea584b3d997372abd21370"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+function login(){
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+auth.signInWithEmailAndPassword(email,password)
+.catch(e=>document.getElementById("message").innerText=e.message);
+}
+function signup(){
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+auth.createUserWithEmailAndPassword(email,password)
+.catch(e=>document.getElementById("message").innerText=e.message);
+}
+function logout(){auth.signOut();}
+auth.onAuthStateChanged(user=>{
+document.getElementById("login").style.display=user?"none":"block";
+document.getElementById("dashboard").style.display=user?"block":"none";
+if(user) document.getElementById("userEmail").innerText=user.email;
+});
+</script>
+</body>
+</html>
