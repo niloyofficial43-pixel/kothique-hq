@@ -1,4 +1,4 @@
-// KOTHIQUE HQ - Management System
+// KOTHIQUE HQ - Corporate Management
 
 const firebaseConfig = {
   apiKey: "AIzaSyAIun0R_-JrATLVn4-aYndUo0_yxAuICjk",
@@ -26,32 +26,28 @@ const chairman = {
   email: "niloyofficial43@gmail.com"
 };
 
-const roleOrder = {
-  "CEO": 1,
-  "Co-Founder": 2,
-  "Board Member": 3,
-  "Director of Finance": 4,
-  "Strategic Advisor": 5,
-  "Team Member": 6
-};
-
-function login() {
+// LOGIN
+document.getElementById("loginBtn").addEventListener("click", async () => {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
 
   message.textContent = "Logging in...";
 
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(error => message.textContent = error.message);
-}
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch (error) {
+    message.textContent = error.message;
+  }
+});
 
-document.getElementById("loginBtn").addEventListener("click", login);
-
+// AUTHENTICATION
 auth.onAuthStateChanged(user => {
   if (user && user.uid === chairmanUID) {
     loginBox.hidden = true;
     dashboard.hidden = false;
+
     document.getElementById("userEmail").textContent = user.email;
+
     loadTeam();
   } else {
     dashboard.hidden = true;
@@ -64,6 +60,7 @@ auth.onAuthStateChanged(user => {
   }
 });
 
+// LOGOUT
 document.getElementById("logoutBtn").addEventListener("click", () => {
   auth.signOut();
 });
@@ -93,7 +90,8 @@ document.getElementById("addMemberBtn").addEventListener("click", async () => {
     document.getElementById("memberRole").value = "";
     document.getElementById("memberEmail").value = "";
 
-    teamMessage.textContent = "Team member added successfully!";
+    teamMessage.textContent = "Member added successfully!";
+
     loadTeam();
 
   } catch (error) {
@@ -101,10 +99,38 @@ document.getElementById("addMemberBtn").addEventListener("click", async () => {
   }
 });
 
-// LOAD AND SORT TEAM
+// CREATE MEMBER CARD
+function createMemberCard(serial, member) {
+  const card = document.createElement("div");
+
+  card.style.padding = "15px";
+  card.style.margin = "10px 0";
+  card.style.background = "#26354c";
+  card.style.borderRadius = "10px";
+
+  const name = document.createElement("h3");
+  name.textContent = serial + ". " + member.name;
+
+  const role = document.createElement("p");
+  role.textContent = "Designation: " + member.role;
+
+  const email = document.createElement("p");
+  email.textContent = "Email: " + (member.email || "Not provided");
+
+  card.append(name, role, email);
+
+  return card;
+}
+
+// LOAD TEAM AND SEPARATE DEPARTMENTS
 async function loadTeam() {
-  const teamList = document.getElementById("teamList");
-  teamList.innerHTML = "Loading team...";
+  const leadership = document.getElementById("leadershipList");
+  const board = document.getElementById("boardList");
+  const executive = document.getElementById("executiveList");
+
+  leadership.innerHTML = "Loading...";
+  board.innerHTML = "";
+  executive.innerHTML = "";
 
   try {
     const snapshot = await db.collection("team").get();
@@ -118,68 +144,100 @@ async function loadTeam() {
       });
     });
 
-    members.sort((a, b) => {
-      const rankA = roleOrder[a.role] ?? 99;
-      const rankB = roleOrder[b.role] ?? 99;
+    const rank = {
+      "CEO": 1,
+      "Co-Founder": 2,
+      "Board Member": 1,
+      "Director of Finance": 2,
+      "Strategic Advisor": 3,
+      "Team Member": 1
+    };
 
-      if (rankA !== rankB) return rankA - rankB;
+    members.sort((a, b) => {
+      const aRank = rank[a.role] || 99;
+      const bRank = rank[b.role] || 99;
+
+      if (aRank !== bRank) return aRank - bRank;
 
       return (a.createdAt?.seconds || 0) -
              (b.createdAt?.seconds || 0);
     });
 
-    teamList.innerHTML = "";
+    // LEADERSHIP
+    leadership.innerHTML = "";
 
-    const heading = document.createElement("h3");
-    heading.textContent = "Leadership & Management";
-    teamList.appendChild(heading);
+    leadership.appendChild(
+      createMemberCard(1, chairman)
+    );
 
-    addMemberCard(teamList, 1, chairman.name,
-      chairman.role, chairman.email);
+    const leaders = members.filter(member =>
+      ["CEO", "Co-Founder"].includes(member.role)
+    );
 
-    members.forEach((member, index) => {
-      const designation = member.name === "A.K.M. Reazul Kuddus"
-        ? "Co-Founder & CEO"
-        : member.role;
+    leaders.forEach((member, index) => {
+      let designation = member.role;
 
-      addMemberCard(
-        teamList,
-        index + 2,
-        member.name,
-        designation,
-        member.email
+      if (member.role === "CEO") {
+        designation = "Co-Founder & CEO";
+      }
+
+      leadership.appendChild(
+        createMemberCard(index + 2, {
+          ...member,
+          role: designation
+        })
       );
     });
 
-    if (members.length === 0) {
-      const empty = document.createElement("p");
-      empty.textContent = "No additional members added yet.";
-      teamList.appendChild(empty);
+    // BOARD OF DIRECTORS
+    const boardMembers = members.filter(member =>
+      ["Board Member", "Director of Finance", "Strategic Advisor"]
+        .includes(member.role)
+    );
+
+    board.innerHTML = "";
+
+    if (boardMembers.length === 0) {
+      board.textContent = "No board members added yet.";
+    } else {
+      boardMembers.forEach((member, index) => {
+        let designation = member.role;
+
+        if (member.role === "Director of Finance") {
+          designation = "Board Member & Director of Finance";
+        }
+
+        if (member.role === "Strategic Advisor") {
+          designation = "Board Member & Strategic Advisor";
+        }
+
+        board.appendChild(
+          createMemberCard(index + 1, {
+            ...member,
+            role: designation
+          })
+        );
+      });
+    }
+
+    // EXECUTIVE TEAM
+    const teamMembers = members.filter(member =>
+      member.role === "Team Member"
+    );
+
+    executive.innerHTML = "";
+
+    if (teamMembers.length === 0) {
+      executive.textContent = "No executive team members added yet.";
+    } else {
+      teamMembers.forEach((member, index) => {
+        executive.appendChild(
+          createMemberCard(index + 1, member)
+        );
+      });
     }
 
   } catch (error) {
-    teamList.textContent = "Error: " + error.message;
+    leadership.textContent = "Error: " + error.message;
   }
-}
-
-// MEMBER CARD
-function addMemberCard(container, serial, name, role, email) {
-  const card = document.createElement("div");
-
-  card.style.padding = "15px";
-  card.style.margin = "10px 0";
-  card.style.background = "#26354c";
-  card.style.borderRadius = "10px";
-
-  const title = document.createElement("h3");
-  title.textContent = serial + ". " + name;
-
-  const position = document.createElement("p");
-  position.textContent = "Designation: " + role;
-
-  const contact = document.createElement("p");
-  contact.textContent = "Email: " + (email || "Not provided");
-
-  card.append(title, position, contact);
-  container.appendChild(card);
 }
