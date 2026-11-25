@@ -29,28 +29,38 @@
     <hr>
 
     <h2>Team Management</h2>
-    <p>Add and manage KOTHIQUE team members.</p>
 
     <input id="memberName" placeholder="Full Name">
 
     <select id="memberRole">
       <option value="">Select Position</option>
-      <option>Co-Founder</option>
-      <option>CEO</option>
-      <option>Board Member</option>
-      <option>Director of Finance</option>
-      <option>Strategic Advisor</option>
-      <option>Team Member</option>
+      <option value="Co-Founder">Co-Founder</option>
+      <option value="CEO">CEO</option>
+      <option value="Board Member">Board Member</option>
+      <option value="Director of Finance">Director of Finance</option>
+      <option value="Strategic Advisor">Strategic Advisor</option>
+      <option value="Team Member">Team Member</option>
     </select>
 
     <input id="memberEmail" type="email" placeholder="Email (Optional)">
-
     <button id="addMemberBtn">Add Team Member</button>
-
     <p id="teamMessage"></p>
 
-    <h3>Our Team</h3>
-    <div id="teamList">Loading team...</div>
+    <hr>
+
+    <h2>Leadership</h2>
+    <div id="leadershipList"></div>
+
+    <hr>
+
+    <h2>Board of Directors</h2>
+    <div id="boardList"></div>
+
+    <hr>
+
+    <h2>Executive Team</h2>
+    <div id="executiveList"></div>
+
   </div>
 </div>
 
